@@ -1,0 +1,39 @@
+[
+  {
+    "id": "eval-1",
+    "prompt": "Analyze the uploaded template and create a 3-slide presentation about AI technology with a title slide, content slide, and closing slide",
+    "files": ["sample_template.pptx"],
+    "expectations": [
+      "Template is analyzed and configuration is generated",
+      "A presentation with 3 slides is created",
+      "The first slide is a title slide",
+      "The second slide has content about AI technology",
+      "The third slide is a closing slide",
+      "The output presentation uses the same template styling"
+    ]
+  },
+  {
+    "id": "eval-2",
+    "prompt": "Use the corporate template to create a quarterly report with: title slide 'Q4 2024 Results', content slide with 3 key metrics, and two-column comparison slide",
+    "files": ["corporate_template.pptx"],
+    "expectations": [
+      "Configuration is loaded or generated",
+      "4 slides are created",
+      "Title slide has 'Q4 2024 Results'",
+      "Content slide has at least 3 bullet points",
+      "Two-column slide uses appropriate layout",
+      "All slides maintain template styling"
+    ]
+  },
+  {
+    "id": "eval-3",
+    "prompt": "Batch generate 3 presentations from the template, each with a title slide and 2 content slides, with different titles: 'Project A', 'Project B', 'Project C'",
+    "files": ["batch_template.pptx"],
+    "expectations": [
+      "3 separate .pptx files are created",
+      "Each presentation has 3 slides",
+      "Each presentation has a different title",
+      "All presentations use the same template styling"
+    ]
+  }
+]

@@ -1,0 +1,314 @@
+{
+  "template_name": "claude-agent-skills.pptx",
+  "total_layouts": 14,
+  "layouts": [
+    {
+      "index": 0,
+      "name": "タイトル スライド 2",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "CENTER_TITLE (3)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "name": "議題 2",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 1,
+          "name": "コンテンツ プレースホルダー 2",
+          "type": "OBJECT (7)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "name": "キャプション付きの画像 2",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 1,
+          "name": "図プレースホルダー 20",
+          "type": "PICTURE (18)"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "name": "セクション ヘッダー 1",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 11,
+          "name": "図プレースホルダー 4",
+          "type": "PICTURE (18)"
+        },
+        {
+          "idx": 10,
+          "name": "コンテンツ プレースホルダー 2",
+          "type": "OBJECT (7)"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "name": "タイトルとコンテンツ 7",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 10,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 4,
+          "name": "スライド番号プレースホルダー 5",
+          "type": "SLIDE_NUMBER (13)"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "name": "引用",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 13,
+          "name": "テキスト プレースホルダー 31",
+          "type": "BODY (2)"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "name": "表​​ 1",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 11,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 12,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 4,
+          "name": "スライド番号プレースホルダー 5",
+          "type": "SLIDE_NUMBER (13)"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "name": "2 コンテンツ 2",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 13,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 12,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 4,
+          "name": "スライド番号プレースホルダー 5",
+          "type": "SLIDE_NUMBER (13)"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "name": "タイトル、コンテンツ、画像",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 12,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 10,
+          "name": "図プレースホルダー 4",
+          "type": "PICTURE (18)"
+        },
+        {
+          "idx": 4,
+          "name": "スライド番号プレースホルダー 5",
+          "type": "SLIDE_NUMBER (13)"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "name": "タイトルと 2 コンテンツ 2",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 12,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 13,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 4,
+          "name": "スライド番号プレースホルダー 5",
+          "type": "SLIDE_NUMBER (13)"
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "name": "タイトルと 2 コンテンツ",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 13,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 12,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        },
+        {
+          "idx": 4,
+          "name": "スライド番号プレースホルダー 5",
+          "type": "SLIDE_NUMBER (13)"
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "name": "タイトルとコンテンツ 5",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "TITLE (1)"
+        },
+        {
+          "idx": 14,
+          "name": "表プレースホルダー 4",
+          "type": "TABLE (12)"
+        },
+        {
+          "idx": 4,
+          "name": "スライド番号プレースホルダー 5",
+          "type": "SLIDE_NUMBER (13)"
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "name": "結び",
+      "placeholders": [
+        {
+          "idx": 0,
+          "name": "タイトル 1",
+          "type": "CENTER_TITLE (3)"
+        },
+        {
+          "idx": 13,
+          "name": "コンテンツ プレースホルダー 6",
+          "type": "OBJECT (7)"
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "name": "空白",
+      "placeholders": [
+        {
+          "idx": 4,
+          "name": "スライド番号プレースホルダー 5",
+          "type": "SLIDE_NUMBER (13)"
+        }
+      ]
+    }
+  ],
+  "categorized": {
+    "title_slides": [],
+    "content_slides": [],
+    "two_column_slides": [
+      0,
+      1,
+      2,
+      7,
+      9,
+      10
+    ],
+    "blank_slides": [],
+    "section_headers": [],
+    "other": [
+      3,
+      4,
+      5,
+      6,
+      8,
+      11,
+      12,
+      13
+    ]
+  },
+  "recommended_config": {
+    "title_slide": 0,
+    "content_slide": 1,
+    "two_column": 0
+  }
+}
