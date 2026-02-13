@@ -1,185 +1,235 @@
-# Generating Template-Based Presentations
+# Template-Conformant PPTX Creation Skill
 
-Agent skill that can generate PowerPoint presentations that perfectly match any template's styling.
+ユーザーがアップロードしたPowerPointテンプレートに完全準拠した新規プレゼンテーションを作成するスキルです。
 
-下記に従ってscriptを走らせることもできるが，基本的にClaude DesktopのAgent Skillとして利用することを想定している．
+## 概要
 
-## Quick Start
+このスキルは以下の課題を解決します：
 
-### 1. Install Dependencies
+- **テンプレートの不適切な使用**: レイアウト、色、フォントがテンプレートと一致しない
+- **レイアウト選択の失敗**: コンテンツに適さないレイアウトの選択
+- **デザインの単調さ**: 同じレイアウトの繰り返しによる退屈なプレゼンテーション
+- **品質の問題**: テキストのはみ出し、重なり、不適切なフォーマット
 
+## 主な機能
+
+### 1. テンプレート分析
+- テンプレートの視覚的確認
+- レイアウトカタログの自動生成
+- 各レイアウトの特徴と推奨用途の提示
+
+### 2. コンテンツに基づくレイアウト選択
+- タイトルスライド、箇条書き、2カラム、画像中心など、コンテンツタイプに応じた最適なレイアウト選択
+- デザインの多様性を確保（同じレイアウトの連続を避ける）
+
+### 3. 品質保証
+- テンプレート準拠チェック（色、フォント、レイアウト）
+- テキストのはみ出し・重なりチェック
+- 装飾要素の保持確認
+
+### 4. 自動調整
+- フォントサイズの自動調整
+- レイアウトの最適化
+- テキストボックスのサイズ調整
+
+## ファイル構成
+
+```
+template-pptx/
+├── SKILL.md           # スキルのメインドキュメント（詳細なワークフロー）
+├── helpers.py         # ヘルパー関数集
+├── README.md          # このファイル
+└── evals/
+    ├── evals.json     # 評価用テストケース
+    └── files/         # テスト用ファイル
+```
+
+## 使い方
+
+### 基本的な使用方法
+
+1. **テンプレートをアップロード**
+   ```
+   ユーザー: このテンプレート（template.pptx）を使って、プレゼンテーションを作りたいです。
+   ```
+
+2. **コンテンツを提供**
+   ```
+   ユーザー: 以下の内容で5枚のスライドを作成してください：
+   1. タイトル: 「2025年度計画」
+   2. 背景: 市場環境、競合状況、顧客ニーズ
+   3. 課題: 成長鈍化、コスト増、対応遅れ
+   4. 解決策: [左] 短期施策、[右] 中長期施策
+   5. まとめ
+   ```
+
+3. **Claudeがスキルを適用**
+   - テンプレート分析
+   - レイアウトカタログの提示
+   - スライド構成案の提案
+   - ユーザー確認
+   - スライド作成
+   - 品質保証
+   - 完成ファイルの提示
+
+### ヘルパースクリプトの使用
+
+#### テンプレート分析
 ```bash
-pip install python-pptx
+python helpers.py template.pptx
 ```
 
-### 2. Analyze Your Template
+出力例：
+```
+テンプレート分析: template.pptx
 
-```bash
-python scripts/analyze_template.py your_template.pptx --output config
+================================================================================
+レイアウトカタログ
+================================================================================
+
+スライド 1:
+  レイアウト名: Title Slide
+  テキストシェイプ: 2
+  画像: 0
+  装飾要素: 3
+  タイトル: あり
+  コンテンツ: なし
+  推奨用途: タイトルスライド、セクション区切り
+
+スライド 2:
+  レイアウト名: Content with Caption
+  テキストシェイプ: 2
+  画像: 0
+  装飾要素: 1
+  タイトル: あり
+  コンテンツ: あり
+  推奨用途: 箇条書き、標準コンテンツ
+
+...
 ```
 
-This creates:
-- `config.json` - Layout configuration
-- `config_analysis.json` - Full analysis data
-- `config.txt` - Human-readable report
-
-### 3. Create Slides Specification
-
-Create `slides.json`:
-
-```json
-[
-  {
-    "type": "title",
-    "title": "My Presentation",
-    "subtitle": "An Amazing Deck"
-  },
-  {
-    "type": "content",
-    "title": "Key Points",
-    "content": ["Point 1", "Point 2", "Point 3"]
-  }
-]
-```
-
-### 4. Generate Presentation
-
-```bash
-python scripts/create_presentation.py \
-  --template your_template.pptx \
-  --config config.json \
-  --slides slides.json \
-  --output output.pptx
-```
-
-## Usage Examples
-
-### Example 1: Python API
+#### プログラマティックな使用
 
 ```python
-from core.presentation_builder import PresentationBuilder, TemplateConfig
-
-# Load config
-config = TemplateConfig.from_file('config.json')
-
-# Create builder
-builder = PresentationBuilder('template.pptx', config)
-
-# Add slides
-builder.add_title_slide("My Title")
-builder.add_content_slide("Agenda", ["Item 1", "Item 2"])
-
-# Save
-builder.save('output.pptx')
-```
-
-### Example 2: Batch Processing
-
-```python
-from core.presentation_builder import PresentationBuilder, TemplateConfig
-
-config = TemplateConfig.from_file('config.json')
-
-for customer in customers:
-    builder = PresentationBuilder('template.pptx', config)
-    builder.add_title_slide(f"Proposal for {customer.name}")
-    builder.add_content_slide("Services", customer.services)
-    builder.save(f'{customer.id}_proposal.pptx')
-```
-
-### Example 3: Data-Driven
-
-```python
-import json
-from core.presentation_builder import create_simple_presentation
-
-with open('data.json') as f:
-    slides_data = json.load(f)
-
-create_simple_presentation(
-    template_path='template.pptx',
-    output_path='output.pptx',
-    slides_data=slides_data,
-    config_path='config.json'
+from helpers import (
+    duplicate_slide,
+    replace_slide_text,
+    analyze_layout_usage,
+    get_template_layouts_info
 )
+from pptx import Presentation
+
+# テンプレートを読み込み
+prs = Presentation('template.pptx')
+
+# テンプレートのスライド1（タイトルスライド）を複製
+new_slide = duplicate_slide(prs, 0)
+
+# テキストを置き換え
+replace_slide_text(
+    new_slide,
+    title="新しいタイトル",
+    content=["項目1", "項目2", "項目3"]
+)
+
+# 保存
+prs.save('output.pptx')
+
+# レイアウト使用状況のチェック
+usage, issues = analyze_layout_usage(prs)
+if issues:
+    print("⚠️ 警告:")
+    for issue in issues:
+        print(f"  {issue['message']}")
 ```
 
-## Slide Types
+## ワークフロー詳細
 
-### Title Slide
-```json
-{"type": "title", "title": "Main Title", "subtitle": "Subtitle"}
-```
+詳細なワークフローについては `SKILL.md` を参照してください。主要なステップ：
 
-### Content Slide
-```json
-{
-  "type": "content",
-  "title": "Slide Title",
-  "content": ["Bullet 1", "Bullet 2"]
-}
-```
+1. **要件ヒアリング** - 目的、オーディエンス、コンテンツの収集
+2. **テンプレート分析** - 視覚確認、レイアウトカタログ作成
+3. **コンテンツ構成設計** - スライドリスト作成、レイアウト選択
+4. **スライド作成** - テンプレートからの複製とコンテンツ置き換え
+5. **品質保証** - テンプレート準拠、コンテンツ品質、デザイン多様性の確認
+6. **不要なスライド削除** - 使用しなかったテンプレートスライドの削除
+7. **最終確認と提示** - 変更履歴の報告、完成ファイルの提供
 
-### Two-Column Slide
-```json
-{
-  "type": "two_column",
-  "title": "Comparison",
-  "left": ["Left 1", "Left 2"],
-  "right": ["Right 1", "Right 2"]
-}
-```
+## 評価（Evals）
 
-### Custom Layout
-```json
-{"type": "custom", "layout": 5}
-```
+スキルの動作を検証するためのテストケースが `evals/evals.json` に定義されています：
 
-## Configuration Format
+- **eval-0-simple-business**: シンプルなビジネスプレゼンテーション
+- **eval-1-technical-presentation**: 技術プレゼンテーション（レイアウト多様性重視）
+- **eval-2-text-heavy**: テキスト量が多いケース（オーバーフロー対応）
+- **eval-3-layout-selection**: レイアウト選択の適切性テスト
 
-The `config.json` maps semantic names to layout indices:
+各evalには期待される結果（expectations）が定義されており、スキルの品質を客観的に評価できます。
 
-```json
-{
-  "title_slide": 0,
-  "content_slide": 4,
-  "two_column": 7,
-  "section_header": 3,
-  "closing": 12,
-  "blank": 13
-}
-```
+## ベストプラクティス
 
-Use these names in your code:
-```python
-builder.add_slide('section_header')  # Uses layout 3
-builder.add_slide('closing')         # Uses layout 12
-```
+1. **段階的な作成**: 一度に全部作らず、2-3スライドごとに確認
+2. **ユーザーフィードバック**: レイアウト選択後、作成前に確認を取る
+3. **視覚的確認**: thumbnail.pyなどを活用して常に視覚確認
+4. **調整の記録**: 行った変更を記録し、最後に報告
+5. **テンプレートの保護**: 元のテンプレートファイルは必ずコピーして作業
 
-## Limitations
+## トラブルシューティング
 
-- ✅ Preserves all template styling
-- ✅ Uses any template layout
-- ✅ Batch generation supported
-- ❌ Cannot modify layouts or themes
-- ❌ Cannot add animations
-- ❌ Images/tables need manual handling
+### よくある問題と解決策
 
-## Troubleshooting
+#### 問題: テキストがはみ出す
+**解決策:**
+- フォントサイズを段階的に縮小（最小12pt）
+- テキストボックスを拡大
+- コンテンツを2つのスライドに分割
 
-**Problem**: "Template not found"  
-**Solution**: Use absolute paths or verify file exists
+#### 問題: レイアウトが少なすぎる
+**解決策:**
+- 同じレイアウトでも配置を工夫
+- テキストボックスの追加/削除で変化を作る
+- ユーザーに追加テンプレートスライドの作成を提案
 
-**Problem**: Text not appearing  
-**Solution**: Run `analyze_template.py` to check layout structure
+#### 問題: 装飾要素が消える
+**解決策:**
+- `duplicate_slide()` を使ってスライド全体をコピー
+- テキストのみ置き換え、他の要素には触れない
+- z-orderを確認
 
-**Problem**: Wrong layout used  
-**Solution**: Check config.json matches your template's layout indices
+詳細は `SKILL.md` の「トラブルシューティング」セクションを参照してください。
 
-## Documentation
+## 依存関係
 
-See `SKILL.md` for complete API reference and advanced usage.
+- Python 3.7+
+- python-pptx
+- markitdown（オプション、テキスト抽出用）
 
-## License
+## 制約事項
 
-MIT
+- 非常に複雑なテンプレート（アニメーション、埋め込みビデオなど）は完全に保持できない場合があります
+- マクロ付きテンプレート（.pptm）は対応していません
+- Python-pptxライブラリの制約により、一部の高度な機能は利用できません
+
+## 今後の改善案
+
+- [ ] AIによる画像選択と配置の自動化
+- [ ] チャート・グラフの自動生成
+- [ ] 複数テンプレートの統合
+- [ ] スライドノートの自動生成
+- [ ] アクセシビリティチェック（色のコントラスト、代替テキストなど）
+
+## ライセンス
+
+このスキルは[ライセンス条項]に従って提供されます。
+
+## サポート
+
+問題や質問がある場合は、以下の方法で報告してください：
+- GitHub Issues
+- [サポートチャネル]
+
+---
+
+**作成日**: 2025年2月13日  
+**バージョン**: 1.0.0  
+**作成者**: Claude & User

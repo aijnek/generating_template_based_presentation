@@ -1,466 +1,574 @@
 ---
 name: generating-template-based-presentation
-description: Generating PowerPoint presentations that perfectly conform to any user-provided template. Automatically analyzes template layouts, generates configuration, and builds slides with complete template fidelity. Use when users upload a PowerPoint template and want to create presentations using it, or mention "template," "corporate template," "brand guidelines" with presentations.
-license: MIT
+description: ユーザーがアップロードしたPowerPointテンプレートに完全準拠したスライドを作成します。テンプレートのレイアウト、色、フォント、装飾要素を正確に保持しながら、新しいコンテンツでプレゼンテーションを作成します。
 ---
 
-# Generating Template-Based Presentations
+# Template-Conformant PPTX Creation Skill
 
-Create professional PowerPoint presentations with perfect template fidelity. This skill analyzes any template, maps its layouts, and generates slides that exactly match the template's styling.
+このスキルは、ユーザー提供のPowerPointテンプレートに完全に準拠した新規プレゼンテーションを作成します。
 
-## When to Use This Skill
+## コア原則
 
-Trigger this skill when:
-- User uploads a .pptx template file and wants to create presentations
-- User mentions "use my template", "corporate template", "brand guidelines"
-- User wants to generate multiple presentations with consistent styling
-- User says "create a presentation using this template"
-- User needs to automate presentation generation while maintaining design consistency
+1. **テンプレートの完全な尊重** - ユーザーのテンプレートのデザイン、色、フォント、レイアウトを100%保持
+2. **テキストクリアの徹底** - スライドコピー後、必ず全テキストをクリアしてから新しい内容を設定（重なり防止）
+3. **レイアウトの賢い選択** - 各スライドのコンテンツに最適なレイアウトを選択
+4. **デザインの多様性** - 同じレイアウトの連続を避け、視覚的なリズムを作る
+5. **品質保証の徹底** - 文字の重なり、はみ出し、不具合を必ずチェック
 
-**Examples of user requests:**
-- "Create a presentation using this template with 5 slides about AI"
-- "Use my corporate template to make a quarterly report"
-- "Generate a pitch deck that matches our brand guidelines"
-- "Make 10 presentations from this template with different data"
+## ワークフロー
 
-## Core Workflow
+### ステップ1: 要件ヒアリング
 
-### Phase 1: Analyze Template
+ユーザーからの情報収集：
 
-**When**: User uploads a template or you need to understand layout structure
+```
+必須情報:
+- プレゼンテーションの目的・テーマ
+- 対象オーディエンス
+- 各スライドの内容（箇条書きまたは詳細）
+
+任意情報:
+- 希望するスライド枚数
+- 特に強調したいポイント
+- 避けたいレイアウトやスタイル
+```
+
+**ユーザーへの確認:**
+- テンプレートファイルがアップロード済みか確認
+- コンテンツの詳細度を確認（概要のみ vs 詳細テキスト）
+
+---
+
+### ステップ2: テンプレート分析
+
+#### 2a. テンプレートの視覚確認
 
 ```bash
-python scripts/analyze_template.py <template.pptx> --output config
+# テンプレートのサムネイルを生成
+python scripts/thumbnail.py template.pptx
 ```
 
-**This produces:**
-- `config.json` - Layout mapping (indices to semantic names)
-- `config_analysis.json` - Full structural data
-- `config.txt` - Human-readable report
-
-**What it does:**
-1. Extracts all layout names and indices
-2. Identifies placeholder types (title, content, images, tables)
-3. Categorizes layouts (title slides, content slides, two-column, etc.)
-4. Generates recommended configuration
-
-**Example output:**
-```json
-{
-  "title_slide": 0,
-  "content_slide": 4,
-  "two_column": 7,
-  "section_header": 3,
-  "closing": 12
-}
-```
-
-### Phase 2: Plan Content Structure
-
-**When**: After analysis, work with user to define what slides they need
-
-**Ask the user:**
-1. How many slides?
-2. What content for each slide?
-3. Which layout for each slide?
-
-**Create a slides specification** (JSON or interactive):
-```json
-[
-  {
-    "type": "title",
-    "title": "Main Title",
-    "subtitle": "Subtitle Text"
-  },
-  {
-    "type": "content",
-    "title": "Key Points",
-    "content": ["Point 1", "Point 2", "Point 3"]
-  },
-  {
-    "type": "two_column",
-    "title": "Comparison",
-    "left": ["Option A", "Feature 1"],
-    "right": ["Option B", "Feature 2"]
-  }
-]
-```
-
-### Phase 3: Generate Presentation
-
-**Option A: Using CLI**
-```bash
-python scripts/create_presentation.py \
-  --template template.pptx \
-  --config config.json \
-  --slides slides.json \
-  --output output.pptx
-```
-
-**Option B: Using Python API**
-```python
-from core.presentation_builder import PresentationBuilder, TemplateConfig
-
-# Load configuration
-config = TemplateConfig.from_file('config.json')
-
-# Initialize builder with template
-builder = PresentationBuilder('template.pptx', config)
-
-# Add slides
-builder.add_title_slide("My Presentation", "Subtitle")
-builder.add_content_slide("Agenda", [
-    "Introduction",
-    "Main Content", 
-    "Conclusion"
-])
-
-# Save
-builder.save('output.pptx')
-```
-
-**Option C: Interactive Mode**
-```bash
-python scripts/create_presentation.py --interactive
-```
-
-This guides the user through each step interactively.
-
-## Slide Types
-
-### Title Slide
-```json
-{"type": "title", "title": "Main Title", "subtitle": "Optional Subtitle"}
-```
-
-```python
-builder.add_title_slide("Main Title", "Subtitle")
-```
-
-### Content Slide (Bullets)
-```json
-{
-  "type": "content",
-  "title": "Slide Title", 
-  "content": ["Bullet 1", "Bullet 2", "Bullet 3"]
-}
-```
-
-```python
-builder.add_content_slide("Slide Title", ["Bullet 1", "Bullet 2"])
-```
-
-### Two-Column Slide
-```json
-{
-  "type": "two_column",
-  "title": "Comparison",
-  "left": ["Left 1", "Left 2"],
-  "right": ["Right 1", "Right 2"]
-}
-```
-
-```python
-builder.add_two_column_slide("Comparison", 
-    left_content=["Left 1"], 
-    right_content=["Right 1"])
-```
-
-### Custom Layout
-```json
-{"type": "custom", "layout": 5}
-```
-
-```python
-slide = builder.add_slide(5)  # Layout index
-slide.shapes.title.text = "Custom Title"
-```
-
-## Core API Reference
-
-### TemplateConfig
-
-Manages layout mappings from indices to semantic names.
-
-```python
-from core.presentation_builder import TemplateConfig
-
-# Create from dict
-config = TemplateConfig({
-    'title_slide': 0,
-    'content_slide': 4
-})
-
-# Load from file
-config = TemplateConfig.from_file('config.json')
-
-# Save to file
-config.save('config.json')
-
-# Get layout index
-index = config.get_layout_index('title_slide')  # Returns 0
-
-# Add new mapping
-config.add_layout('my_special_layout', 8)
-```
-
-### PresentationBuilder
-
-Main class for creating presentations from templates.
-
-```python
-from core.presentation_builder import PresentationBuilder
-
-# Initialize
-builder = PresentationBuilder('template.pptx', config)
-
-# Inspect available layouts
-builder.print_layouts()                    # Print to console
-layouts = builder.list_layouts()           # Get as list
-info = builder.get_layout_info(4)         # Get specific layout
-
-# Add slides
-slide = builder.add_slide(0)                    # By index
-slide = builder.add_slide('content_slide')      # By config key
-slide = builder.add_slide('Custom Layout Name') # By layout name
-
-# Helper methods
-builder.add_title_slide(title, subtitle=None)
-builder.add_content_slide(title, content=None)
-builder.add_two_column_slide(title, left_content, right_content)
-
-# Properties
-builder.slide_count        # Number of slides
-builder.layout_count       # Number of available layouts
-
-# Save
-builder.save('output.pptx')
-```
-
-## Common Patterns
-
-### Pattern 1: Quick Single Presentation
-
-```python
-from core.presentation_builder import create_simple_presentation
-
-slides_data = [
-    {"type": "title", "title": "Q1 Report"},
-    {"type": "content", "title": "Summary", "content": ["Item 1", "Item 2"]}
-]
-
-create_simple_presentation(
-    template_path='template.pptx',
-    output_path='output.pptx',
-    slides_data=slides_data,
-    config_path='config.json'
-)
-```
-
-### Pattern 2: Batch Processing Multiple Presentations
-
-```python
-from core.presentation_builder import PresentationBuilder, TemplateConfig
-
-config = TemplateConfig.from_file('config.json')
-
-# Generate one presentation per data item
-for item in data_items:
-    builder = PresentationBuilder('template.pptx', config)
-    
-    builder.add_title_slide(item['title'])
-    builder.add_content_slide("Details", item['details'])
-    
-    builder.save(f'output_{item["id"]}.pptx')
-```
-
-### Pattern 3: Data-Driven Generation
-
-```python
-import json
-from core.presentation_builder import PresentationBuilder, TemplateConfig
-
-# Load data from external source
-with open('data.json') as f:
-    data = json.load(f)
-
-config = TemplateConfig.from_file('config.json')
-builder = PresentationBuilder('template.pptx', config)
-
-# Generate slides from data
-for section in data['sections']:
-    builder.add_content_slide(
-        title=section['heading'],
-        content=section['points']
-    )
-
-builder.save('data_driven_output.pptx')
-```
-
-### Pattern 4: Multiple Templates
-
-```python
-from core.presentation_builder import PresentationBuilder, TemplateConfig
-
-templates = {
-    'corporate': ('corp_template.pptx', 'corp_config.json'),
-    'sales': ('sales_template.pptx', 'sales_config.json')
-}
-
-for template_type, (template_path, config_path) in templates.items():
-    config = TemplateConfig.from_file(config_path)
-    builder = PresentationBuilder(template_path, config)
-    
-    # Build slides...
-    
-    builder.save(f'{template_type}_output.pptx')
-```
-
-## Understanding Template Analysis
-
-When you run `analyze_template.py`, it categorizes layouts:
-
-**Title Slides**: Layouts with "title" and "slide" in name, usually index 0
-**Content Slides**: Layouts with title + body/content placeholders  
-**Two-Column Slides**: Layouts with 2+ content placeholders  
-**Section Headers**: Layouts with "section" or "header" in name  
-**Blank Slides**: Layouts with "blank" or "empty" in name  
-
-The analyzer provides **recommendations**, but you should:
-1. Review the human-readable report (`config.txt`)
-2. Check if recommended indices make sense
-3. Adjust configuration based on actual template structure
-4. Test with a few slides before batch processing
-
-## Troubleshooting
-
-### Issue: "Template not found"
-**Cause**: Path to template is incorrect  
-**Fix**: Use absolute paths or verify file exists
-```python
-from pathlib import Path
-assert Path('template.pptx').exists()
-```
-
-### Issue: "No placeholder on this slide"
-**Cause**: Layout doesn't have expected placeholders  
-**Fix**: 
-1. Run `analyze_template.py` to see actual structure
-2. Use correct layout index
-3. Manually iterate through placeholders:
-```python
-for shape in slide.placeholders:
-    if hasattr(shape, 'text_frame'):
-        shape.text = "Your text"
-        break
-```
-
-### Issue: Text not appearing
-**Cause**: Accessing wrong placeholder or no text_frame  
-**Fix**: Check placeholder structure
-```python
-layout_info = builder.get_layout_info(4)
-print(layout_info['placeholders'])
-```
-
-### Issue: Config doesn't match template
-**Cause**: Template was updated after config generation  
-**Fix**: Re-run analysis
-```bash
-python scripts/analyze_template.py template.pptx --output config
-```
-
-### Issue: Slide looks different from template
-**Cause**: This skill cannot modify layouts/themes, only use existing ones  
-**Fix**: Ensure you're using the correct layout index. The skill preserves all template styling - if it looks different, you're likely using the wrong layout.
-
-## What This Skill Can Do
-
-✅ **Preserve template styling** - All colors, fonts, themes maintained  
-✅ **Use existing layouts** - Access any layout in the template  
-✅ **Fill placeholders** - Title, content, bullets automatically  
-✅ **Batch generation** - Create many presentations from one template  
-✅ **Configuration management** - Reusable configs per template  
-✅ **Multiple templates** - Switch between templates easily  
-
-## What This Skill Cannot Do
-
-❌ **Modify layouts** - Cannot create new layouts or change existing ones  
-❌ **Change themes** - Cannot alter colors, fonts, or design  
-❌ **Add animations** - Cannot add transitions or animations  
-❌ **Insert images** - Image placeholders require manual handling  
-❌ **Create tables** - Table placeholders need manual population  
-❌ **Modify slide masters** - Master slides are read-only  
-
-**Philosophy**: This skill uses templates as-is. Think of it as a form-filling tool that works with any template structure.
-
-## Advanced: Working with Placeholders
-
-For complex scenarios, work directly with placeholders:
-
-```python
-slide = builder.add_slide(7)
-
-# Iterate through all placeholders
-for shape in slide.placeholders:
-    ph_idx = shape.placeholder_format.idx
-    ph_type = shape.placeholder_format.type
-    
-    print(f"Placeholder {ph_idx}: {ph_type}")
-    
-    # Check if it can hold text
-    if hasattr(shape, 'text_frame'):
-        shape.text = "Custom content"
-    
-    # Check if it's for images
-    if ph_type == 18:  # PICTURE placeholder
-        # Handle image insertion
-        pass
-```
-
-## Best Practices
-
-1. **Always analyze templates first** - Never assume layout structure
-2. **Save configs per template** - Keep them with templates for reuse
-3. **Validate content before generation** - Check slide specs match layouts
-4. **Test with small batches first** - Generate 2-3 slides, verify, then scale
-5. **Handle errors gracefully** - Not all templates have all layout types
-6. **Document your configs** - Add comments about which index is which
-7. **Version control templates and configs** - Track changes together
-
-## Dependencies
+各スライドを視覚的に確認し、以下を把握：
+- スライド数
+- 全体的なデザインスタイル
+- 色使いとフォント
+
+#### 2b. テンプレート構造の詳細分析
 
 ```bash
-pip install python-pptx
+# テンプレートをテキスト形式で抽出
+python -m markitdown template.pptx > template_content.txt
 ```
 
-No other dependencies required.
+各スライドについて記録：
+- レイアウト名（推定）
+- 主要な構成要素
+- テキストボックスの配置
+- 画像やグラフの配置
 
-## File Structure
+#### 2c. レイアウトカタログの作成
+
+テンプレート内の各スライドを分類：
+
+| スライド番号 | レイアウトタイプ | 特徴 | 適した用途 |
+|------------|----------------|------|----------|
+| 1 | タイトルスライド | 大きなタイトル、サブタイトル | 表紙、セクション区切り |
+| 2 | 箇条書き | タイトル + 箇条書きエリア | リスト、要点整理 |
+| 3 | 2カラム | 左右分割レイアウト | 比較、before/after |
+| ... | ... | ... | ... |
+
+**ユーザーへの提示:**
+- サムネイル画像と共にレイアウトカタログを提示
+- 各レイアウトの推奨用途を説明
+
+---
+
+### ステップ3: コンテンツ構成設計
+
+#### 3a. スライドリストの作成
+
+ユーザーの要件に基づき、スライド構成案を作成：
 
 ```
-template-presentation-generator/
-├── SKILL.md                      # This file
-├── README.md                     # Quick start guide
-├── core/
-│   └── presentation_builder.py   # Core library
-├── scripts/
-│   ├── analyze_template.py       # Template analysis tool
-│   └── create_presentation.py    # CLI creator
-├── evals/
-│   ├── evals.json                # Test cases
-│   └── files/                    # Test templates
-└── requirements.txt              # Dependencies
+スライド1: [タイトル] - レイアウト: スライド1（タイトルスライド）
+スライド2: [背景説明] - レイアウト: スライド2（箇条書き）
+スライド3: [課題] - レイアウト: スライド5（強調スライド）
+スライド4: [解決策] - レイアウト: スライド3（2カラム）
+...
 ```
 
-## Examples in Detail
+#### 3b. レイアウトマッチングの基準
 
-See README.md for:
-- Complete workflow examples
-- Real-world use cases (weekly reports, client presentations)
-- Batch processing scripts
-- Integration patterns
+各コンテンツタイプに対するレイアウト選択：
 
-## Version
+**タイトル・セクション区切り:**
+- 大きなタイトルエリアを持つスライド
+- 装飾的で視覚的にインパクトのあるデザイン
 
-1.0.0 - Initial release
+**箇条書き・リスト:**
+- タイトル + テキストエリアの構成
+- 十分な余白のあるレイアウト
+
+**比較・対比:**
+- 2カラムレイアウト
+- 左右または上下に分割された構成
+
+**図表・データ中心:**
+- 画像やグラフ用の大きなエリアを持つレイアウト
+- テキストは最小限
+
+**複数トピック:**
+- 3〜4分割のグリッドレイアウト
+- 各セクションが独立したボックス
+
+#### 3c. デザイン多様性の確保
+
+**避けるべきパターン:**
+- 同じレイアウトを3回以上連続使用
+- 全スライドで箇条書きのみ
+- 視覚的な変化のない単調な構成
+
+**推奨パターン:**
+- タイトル → コンテンツA → コンテンツB → セクション区切り → ...
+- レイアウトを2〜3スライドごとに変える
+- 視覚的に「重い」スライドと「軽い」スライドを交互に
+
+**ユーザーへの確認:**
+- スライド構成案とレイアウト選択を提示
+- フィードバックを収集し、必要に応じて修正
+
+---
+
+### ステップ4: スライド作成
+
+#### 4a. テンプレートの準備
+
+```bash
+# テンプレートファイルをコピー
+cp template.pptx working_presentation.pptx
+```
+
+#### 4b. Python-pptxを使った編集
+
+```python
+from pptx import Presentation
+
+# テンプレートを読み込み
+prs = Presentation('template.pptx')
+
+# 新規スライドを作成する方針:
+# 1. テンプレート内の適切なスライドを特定
+# 2. そのスライドをコピー（duplicate_slide関数を使用）
+# 3. コピーしたスライドのコンテンツを置き換え
+```
+
+#### 4c. コンテンツ置き換えの手順
+
+各スライドについて：
+
+1. **テンプレートから適切なスライドを複製**
+   ```python
+   # 選択したレイアウトに最も近いテンプレートスライドを特定
+   reference_slide_idx = template_slides[layout_choice]
+   new_slide = duplicate_slide(prs, reference_slide_idx)
+   ```
+
+2. **【重要】まず全テキストをクリア**
+   ```python
+   # テンプレートの元テキストを完全に削除（重なり防止のため必須）
+   for shape in new_slide.shapes:
+       if shape.has_text_frame:
+           shape.text_frame.clear()
+   ```
+   
+   **注意：** このステップを省略すると、テンプレートの元テキストが残り、新しいテキストと重なって表示される問題が発生します。必ず実行してください。
+
+3. **テキストの置き換え**
+   ```python
+   for shape in new_slide.shapes:
+       if shape.has_text_frame:
+           # タイトル、本文などを識別して置き換え
+           if is_title_shape(shape):
+               shape.text = new_title
+           elif is_content_shape(shape):
+               shape.text = new_content
+   ```
+
+4. **プレースホルダーの尊重**
+   - テンプレートのプレースホルダー構造を保持
+   - テキストのフォーマット（フォント、サイズ、色）を維持
+
+5. **装飾要素の保持**
+   - 背景画像、ロゴ、装飾図形はそのまま保持
+   - これらを誤って削除・変更しない
+
+#### 4d. スライド順序の調整
+
+```python
+# 新規作成したスライドを適切な順序に並べる
+# 元のテンプレートスライドで不要なものを削除
+```
+
+---
+
+### ステップ5: 品質保証
+
+#### 5a. テンプレート準拠チェック
+
+**チェック項目:**
+- [ ] 色スキームが一貫している（テンプレートの色を使用）
+- [ ] フォントが一貫している（テンプレートのフォントを使用）
+- [ ] 背景・装飾要素が正しく保持されている
+- [ ] レイアウト構造が崩れていない
+
+**確認方法:**
+```bash
+# 作成したスライドを視覚確認
+python scripts/thumbnail.py working_presentation.pptx
+
+# テンプレートと比較
+# 同じスライド番号を見比べて、デザインが保持されているか確認
+```
+
+#### 5b. コンテンツ品質チェック
+
+**文字の重なり・はみ出しチェック:**
+```bash
+# テキスト抽出で内容確認
+python -m markitdown working_presentation.pptx
+```
+
+手動確認事項：
+- [ ] タイトルがテキストボックスに収まっている
+- [ ] 箇条書きが枠内に収まっている
+- [ ] テキストが背景や装飾要素と重なっていない
+- [ ] 文字色と背景色のコントラストが十分
+
+**調整が必要な場合:**
+```python
+# フォントサイズの調整
+for shape in slide.shapes:
+    if shape.has_text_frame:
+        for paragraph in shape.text_frame.paragraphs:
+            for run in paragraph.runs:
+                if run.font.size > Pt(24):  # 大きすぎる場合
+                    run.font.size = Pt(22)
+```
+
+#### 5c. デザイン多様性チェック
+
+レイアウトの使用状況を確認：
+```
+スライド1-3: レイアウトA
+スライド4-5: レイアウトB  ← OK
+スライド6-9: レイアウトA  ← 問題：4回連続で同じレイアウト
+```
+
+**単調さの兆候:**
+- 同じレイアウトが3回以上連続
+- すべてのスライドが箇条書きのみ
+- 視覚的な変化がない
+
+**改善方法:**
+- 一部のスライドのレイアウトを変更
+- コンテンツを統合または分割してレイアウトを多様化
+
+#### 5d. 最終調整
+
+不具合が見つかった場合：
+
+1. **文字の重なり** → フォントサイズを縮小、行間を調整
+2. **テキストのはみ出し** → テキストボックスを拡大、または内容を簡潔化
+3. **レイアウト崩れ** → 該当スライドを再作成
+4. **色・フォントの不一致** → テンプレートの設定を再適用
+
+---
+
+### ステップ6: 不要なスライドの削除
+
+テンプレートに含まれていた元のスライドで、新規作成したスライドに置き換えられていないものを削除：
+
+```python
+# 使用しなかったテンプレートスライドを削除
+slides_to_keep = [新規作成したスライドのインデックス]
+slides_to_remove = [使わなかったテンプレートスライドのインデックス]
+
+for idx in reversed(slides_to_remove):
+    rId = prs.slides._sldIdLst[idx].rId
+    prs.part.drop_rel(rId)
+    del prs.slides._sldIdLst[idx]
+```
+
+**確認:**
+- 削除後、スライド番号と内容が意図通りか確認
+- 必要なスライドを誤って削除していないか確認
+
+---
+
+### ステップ7: 最終確認とユーザー提示
+
+#### 7a. 変更履歴の報告
+
+ユーザーに以下を報告：
+
+```
+完成レポート:
+- 作成したスライド数: X枚
+- 使用したレイアウトの種類: Y種類
+- 実施した調整:
+  * スライド3: タイトルのフォントサイズを24pt→22ptに調整
+  * スライド7: テキストボックスを下に5mm移動
+- 削除したテンプレートスライド: Z枚
+```
+
+#### 7b. QAサマリー
+
+品質保証の結果：
+
+```
+✓ テンプレート準拠: 色・フォント・レイアウトすべて維持
+✓ 文字の重なり: なし
+✓ テキストのはみ出し: なし  
+✓ デザイン多様性: Xパターンのレイアウトを使用、単調さなし
+```
+
+#### 7c. ファイル提示
+
+```bash
+# 最終ファイルを出力ディレクトリにコピー
+cp working_presentation.pptx /mnt/user-data/outputs/final_presentation.pptx
+```
+
+**ユーザーへの提示:**
+- 完成したファイルをダウンロード可能にする
+- サムネイル画像で全体像を見せる
+- 必要に応じて修正対応
+
+---
+
+## ヘルパー関数
+
+### duplicate_slide()
+
+```python
+def duplicate_slide(prs, slide_idx):
+    """指定されたスライドを複製"""
+    from pptx.util import Inches
+    from copy import deepcopy
+    
+    source = prs.slides[slide_idx]
+    
+    # 同じレイアウトで新規スライドを作成
+    blank_slide = prs.slides.add_slide(source.slide_layout)
+    
+    # すべての要素をコピー
+    for shape in source.shapes:
+        el = shape.element
+        newel = deepcopy(el)
+        blank_slide.shapes._spTree.insert_element_before(newel, 'p:extLst')
+    
+    return blank_slide
+```
+
+### is_title_shape()
+
+```python
+def is_title_shape(shape):
+    """シェイプがタイトルかどうかを判定"""
+    if not shape.has_text_frame:
+        return False
+        
+    if shape.is_placeholder:
+        ph_type = shape.placeholder_format.type
+        # PP_PLACEHOLDER.TITLE (1) or SUBTITLE (3) or CENTER_TITLE (14)
+        return ph_type in [1, 3, 14]
+    
+    # プレースホルダーでない場合、位置とサイズで判定
+    # 上部にある大きなテキストボックス
+    if shape.top < Inches(2) and shape.height > Inches(0.5):
+        return True
+    
+    return False
+```
+
+### is_content_shape()
+
+```python
+def is_content_shape(shape):
+    """シェイプがコンテンツ（本文）かどうかを判定"""
+    if not shape.has_text_frame:
+        return False
+        
+    if shape.is_placeholder:
+        ph_type = shape.placeholder_format.type
+        # BODY (2) or OBJECT (7)
+        return ph_type in [2, 7]
+    
+    # タイトルでない大きなテキストボックス
+    if not is_title_shape(shape) and shape.height > Inches(1):
+        return True
+    
+    return False
+```
+
+### create_slide()
+
+```python
+def create_slide(prs, template_idx, title, content=None, is_bullet=False):
+    """テンプレートからスライドを作成"""
+    # スライドを複製
+    new_slide = duplicate_slide(prs, template_idx)
+    
+    # 【重要】まず全テキストシェイプの元テキストをクリア
+    # このステップを忘れると、テンプレートテキストと新テキストが重なる
+    for shape in new_slide.shapes:
+        if shape.has_text_frame:
+            shape.text_frame.clear()
+    
+    # タイトルを設定
+    for shape in new_slide.shapes:
+        if is_title_shape(shape):
+            shape.text = title
+            break
+    
+    # コンテンツを設定
+    if content:
+        for shape in new_slide.shapes:
+            if is_content_shape(shape):
+                if is_bullet and isinstance(content, list):
+                    # 箇条書きの場合
+                    text_frame = shape.text_frame
+                    for i, item in enumerate(content):
+                        p = text_frame.paragraphs[0] if i == 0 else text_frame.add_paragraph()
+                        p.text = item
+                        p.level = 0
+                else:
+                    # 通常のテキスト
+                    shape.text = content
+                break
+    
+    return new_slide
+```
+
+### analyze_layout_usage()
+
+```python
+def analyze_layout_usage(prs):
+    """レイアウトの使用状況を分析"""
+    layout_usage = {}
+    consecutive_count = {}
+    prev_layout = None
+    
+    for slide in prs.slides:
+        layout_name = slide.slide_layout.name
+        
+        # カウント
+        layout_usage[layout_name] = layout_usage.get(layout_name, 0) + 1
+        
+        # 連続使用のチェック
+        if layout_name == prev_layout:
+            consecutive_count[layout_name] = consecutive_count.get(layout_name, 1) + 1
+        else:
+            prev_layout = layout_name
+    
+    # 問題のある連続使用を報告
+    issues = []
+    for layout, count in consecutive_count.items():
+        if count >= 3:
+            issues.append(f"{layout}が{count}回連続使用されています")
+    
+    return layout_usage, issues
+```
+
+---
+
+## トラブルシューティング
+
+### 問題: テンプレートのテキストと新しいテキストが重なる【最重要】
+
+**症状:** スライドに元のテンプレートテキストと新しいテキストの両方が表示され、重なって見える
+
+**原因:** duplicate_slide()でスライドをコピーした後、元のテキストをクリアせずに新しいテキストを設定している
+
+**解決策:**
+```python
+# スライドコピー後、必ず最初に全テキストをクリア
+new_slide = duplicate_slide(prs, template_idx)
+
+# 【必須】全テキストシェイプをクリア
+for shape in new_slide.shapes:
+    if shape.has_text_frame:
+        shape.text_frame.clear()
+
+# この後で新しいテキストを設定
+for shape in new_slide.shapes:
+    if is_title_shape(shape):
+        shape.text = new_title
+```
+
+**予防策:**
+- create_slide()関数の最初のステップとして、必ずテキストクリアを実行
+- コード作成時、このステップを忘れないようコメントで明記
+
+### 問題: テンプレートのレイアウトが少なすぎる
+
+**症状:** テンプレートに2-3種類のスライドしかない
+
+**解決策:**
+1. 同じレイアウトでも配置を工夫して変化をつける
+2. テキストボックスの追加・削除で視覚的な変化を作る
+3. ユーザーに追加のテンプレートスライドの作成を提案
+
+### 問題: テキストがテキストボックスに収まらない
+
+**症状:** 長いテキストがはみ出す、見切れる
+
+**解決策:**
+1. フォントサイズを段階的に縮小（最小12pt）
+2. 行間を調整（line_spacingを0.9〜1.2に）
+3. テキストボックスのサイズを拡大
+4. コンテンツを2つのスライドに分割
+
+### 問題: 装飾要素が消える・ずれる
+
+**症状:** ロゴ、背景画像、装飾図形が正しく表示されない
+
+**解決策:**
+1. duplicate_slide()を使ってスライド全体をコピー
+2. テキストのみを置き換え、他の要素には触れない
+3. z-orderを確認（装飾要素が背面にあるか）
+
+### 問題: フォント・色が一致しない
+
+**症状:** テンプレートと異なるフォントや色が使われる
+
+**解決策:**
+1. テンプレートのtheme colorsを確認
+2. テキスト置き換え時、既存のフォーマットを保持
+3. 新規テキストには明示的にスタイルを適用
+
+---
+
+## ベストプラクティス
+
+1. **【最重要】スライドコピー後は必ずテキストをクリア** - duplicate_slide()の直後に、全テキストシェイプをclear()することで、テンプレートテキストとの重なりを防ぐ
+2. **常にテンプレートをコピーして作業** - 元のテンプレートファイルは保持
+3. **段階的な作成とチェック** - 一度に全部作らず、2-3スライドごとに確認
+4. **ユーザーフィードバックの早期収集** - レイアウト選択後、作成前に確認
+5. **視覚的な確認を怠らない** - thumbnail.pyを活用
+6. **調整の記録** - 行った変更を記録し、最後に報告
+
+---
+
+## 制約事項
+
+- このスキルはPython-pptxライブラリに依存します
+- 非常に複雑なテンプレート（アニメーション、埋め込みビデオなど）は完全に保持できない場合があります
+- マクロ付きテンプレート（.pptm）は対応していません
+
+---
+
+## 参考資料
+
+- Python-pptx documentation: https://python-pptx.readthedocs.io/
+- pptxスキル: `/mnt/skills/public/pptx/SKILL.md`
