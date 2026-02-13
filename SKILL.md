@@ -13,7 +13,8 @@ description: ユーザーがアップロードしたPowerPointテンプレート
 2. **テキストクリアの徹底** - スライドコピー後、必ず全テキストをクリアしてから新しい内容を設定（重なり防止）
 3. **レイアウトの賢い選択** - 各スライドのコンテンツに最適なレイアウトを選択
 4. **デザインの多様性** - 同じレイアウトの連続を避け、視覚的なリズムを作る
-5. **品質保証の徹底** - 文字の重なり、はみ出し、不具合を必ずチェック
+5. **視覚的確認の徹底** - 全スライドをPDF化・画像化して目視確認。特に装飾との重なりをチェック
+6. **品質保証の徹底** - 文字の重なり、はみ出し、不具合を必ずチェック
 
 ## ワークフロー
 
@@ -232,27 +233,85 @@ python scripts/thumbnail.py working_presentation.pptx
 
 #### 5b. コンテンツ品質チェック
 
-**文字の重なり・はみ出しチェック:**
+**【重要】視覚的確認（必須）:**
+
+文字の重なりや装飾との干渉は、テキスト抽出だけでは検出できません。必ず各スライドを画像として視覚的に確認してください。
+
 ```bash
-# テキスト抽出で内容確認
-python -m markitdown working_presentation.pptx
+# ステップ1: PDFに変換
+libreoffice --headless --convert-to pdf --outdir . working_presentation.pptx
+
+# ステップ2: 各スライドを画像として抽出（150dpiで十分）
+# 全スライドを確認
+pdftoppm working_presentation.pdf slide -png -r 150
+
+# または特定のページのみ確認（例：2ページ目）
+pdftoppm working_presentation.pdf slide -png -f 2 -l 2 -r 150
+
+# ステップ3: 生成された画像を確認
+ls -lh slide*.png
 ```
 
-手動確認事項：
-- [ ] タイトルがテキストボックスに収まっている
-- [ ] 箇条書きが枠内に収まっている
-- [ ] テキストが背景や装飾要素と重なっていない
-- [ ] 文字色と背景色のコントラストが十分
-
-**調整が必要な場合:**
+**画像を使った視覚的確認:**
 ```python
-# フォントサイズの調整
-for shape in slide.shapes:
-    if shape.has_text_frame:
-        for paragraph in shape.text_frame.paragraphs:
-            for run in paragraph.runs:
-                if run.font.size > Pt(24):  # 大きすぎる場合
-                    run.font.size = Pt(22)
+# viewツールで各スライドを表示
+view('/path/to/slide-01.png')
+view('/path/to/slide-02.png')
+# ... 全スライドを確認
+```
+
+**チェックポイント:**
+- [ ] タイトルがテキストボックスに収まっている
+- [ ] 箇条書きの全項目が見える（下部の装飾と重なっていない）
+- [ ] テキストが背景や装飾図形と重なっていない
+- [ ] 文字色と背景色のコントラストが十分
+- [ ] 長い文章がテキストボックスからはみ出していない
+- [ ] 特に下部の装飾エリア（帯、バー、グラデーション）との重なりに注意
+
+**問題発見時の対処法:**
+
+1. **箇条書きが装飾と重なる場合:**
+   ```python
+   # 項目数を減らす（最も効果的）
+   # 元のテンプレートの項目数を確認し、それを超えない
+   
+   # または項目を統合
+   # 例: "概要" "目的" → "概要と目的"
+   ```
+
+2. **フォントサイズの調整:**
+   ```python
+   # 全体的にサイズを縮小
+   for shape in slide.shapes:
+       if shape.has_text_frame:
+           for paragraph in shape.text_frame.paragraphs:
+               for run in paragraph.runs:
+                   if run.font.size and run.font.size > Pt(20):
+                       run.font.size = Pt(18)  # 2ptずつ縮小
+   ```
+
+3. **テキストボックスの高さ制限:**
+   ```python
+   # 装飾エリアより上に制限
+   from pptx.util import Inches
+   
+   for shape in slide.shapes:
+       if shape.has_text_frame and not is_title_shape(shape):
+           # 下部の装飾が5.5インチから始まる場合
+           max_bottom = Inches(5.2)  # 安全マージン
+           if shape.top + shape.height > max_bottom:
+               # テキストボックスを装飾より上に制限
+               shape.height = max_bottom - shape.top
+   ```
+
+**修正後の再確認:**
+```bash
+# 修正したらもう一度PDFと画像を生成して確認
+libreoffice --headless --convert-to pdf --outdir . working_presentation.pptx
+pdftoppm working_presentation.pdf verified -png -r 150
+
+# 修正箇所を視覚的に確認
+view('verified-02.png')  # 修正したスライドを確認
 ```
 
 #### 5c. デザイン多様性チェック
@@ -281,6 +340,64 @@ for shape in slide.shapes:
 2. **テキストのはみ出し** → テキストボックスを拡大、または内容を簡潔化
 3. **レイアウト崩れ** → 該当スライドを再作成
 4. **色・フォントの不一致** → テンプレートの設定を再適用
+
+#### 5e. 視覚的確認（必須）
+
+**このステップは省略不可。全スライドを必ず目視確認すること。**
+
+```bash
+# 1. PDFに変換
+libreoffice --headless --convert-to pdf --outdir . working_presentation.pptx
+
+# 2. 全スライドを画像化
+pdftoppm working_presentation.pdf slide -png -r 150
+
+# 3. 各スライドを確認
+ls -lh slide*.png
+```
+
+**Pythonで自動的に全スライドを確認:**
+```python
+import os
+import glob
+
+# 画像ファイルを取得
+png_files = sorted(glob.glob('slide-*.png'))
+
+print(f"生成された画像: {len(png_files)}枚")
+
+# viewツールで各スライドを表示して確認
+for png_file in png_files:
+    print(f"\n確認中: {png_file}")
+    # viewツールで表示
+    # view(png_file)
+    # 問題があれば記録
+```
+
+**確認項目（各スライドごと）:**
+- [ ] タイトルが完全に表示されているか
+- [ ] 箇条書きの全項目が見えるか（特に最後の項目）
+- [ ] 下部の装飾（帯、バー）とテキストが重なっていないか
+- [ ] テキストボックスからはみ出していないか
+- [ ] 背景や装飾図形との重なりがないか
+- [ ] 全体的なバランスが良いか
+
+**問題が見つかった場合:**
+
+1. 問題のあるスライド番号を記録
+2. 原因を特定（項目数過多、テキスト長すぎ、など）
+3. 5a-5dの手順に戻って修正
+4. 修正後、再度視覚的確認を実施（5eを繰り返す）
+
+**修正例:**
+```python
+# 例: スライド2で箇条書きが装飾と重なっている場合
+slide2 = prs.slides[1]
+
+# 原因: 7項目あるが、テンプレートは5項目想定
+# 解決策: 項目を5つに統合
+# 修正後、もう一度PDF化して確認
+```
 
 ---
 
@@ -484,6 +601,60 @@ def analyze_layout_usage(prs):
 
 ## トラブルシューティング
 
+### 問題: 箇条書きが下部の装飾と重なる【重要】
+
+**症状:** アジェンダなどの箇条書きスライドで、最後の数項目が下部の装飾（帯、バー、グラデーション）と重なって読めなくなる
+
+**原因:** 元のテンプレートの項目数より多くの項目を追加している
+
+**解決策（優先順）:**
+
+1. **項目数を減らす（最も効果的）:**
+   ```python
+   # 元のテンプレートを確認
+   # テンプレートが5項目なら、作成するスライドも5項目以下に
+   
+   # 項目を統合
+   # 例: 
+   # "Agent Skillsとは", "なぜ必要か" → "Agent Skillsとは・なぜ必要か"
+   # "構造", "Progressive Disclosure" → "構造とProgressive Disclosure"
+   ```
+
+2. **項目を複数スライドに分割:**
+   ```python
+   # 8項目ある場合
+   # スライド1: アジェンダ（前半） - 4項目
+   # スライド2: アジェンダ（後半） - 4項目
+   ```
+
+3. **フォントサイズを縮小:**
+   ```python
+   for shape in slide.shapes:
+       if shape.has_text_frame and not is_title_shape(shape):
+           for paragraph in shape.text_frame.paragraphs:
+               for run in paragraph.runs:
+                   if run.font.size and run.font.size > Pt(18):
+                       run.font.size = Pt(18)
+   ```
+
+4. **テキストボックスの高さを制限（最終手段）:**
+   ```python
+   # 装飾エリアを特定し、その上までに制限
+   from pptx.util import Inches
+   
+   for shape in slide.shapes:
+       if shape.has_text_frame and not is_title_shape(shape):
+           # 装飾が始まる位置より上に制限
+           max_bottom = Inches(5.2)  # 装飾の開始位置 - 0.3インチ
+           if shape.top + shape.height > max_bottom:
+               shape.height = max_bottom - shape.top
+   ```
+
+**予防策:**
+- スライド作成前に元のテンプレートの項目数を確認
+- 視覚的確認を必ず実施（PDF→画像変換）
+- 疑わしい場合は少なめの項目数でスタート
+
 ### 問題: テンプレートのテキストと新しいテキストが重なる【最重要】
 
 **症状:** スライドに元のテンプレートテキストと新しいテキストの両方が表示され、重なって見える
@@ -552,11 +723,28 @@ for shape in new_slide.shapes:
 ## ベストプラクティス
 
 1. **【最重要】スライドコピー後は必ずテキストをクリア** - duplicate_slide()の直後に、全テキストシェイプをclear()することで、テンプレートテキストとの重なりを防ぐ
-2. **常にテンプレートをコピーして作業** - 元のテンプレートファイルは保持
-3. **段階的な作成とチェック** - 一度に全部作らず、2-3スライドごとに確認
-4. **ユーザーフィードバックの早期収集** - レイアウト選択後、作成前に確認
-5. **視覚的な確認を怠らない** - thumbnail.pyを活用
-6. **調整の記録** - 行った変更を記録し、最後に報告
+
+2. **【重要】全スライドの視覚的確認を実施** - スライド作成後、必ずPDF変換と画像化で各スライドを視覚的に確認する。特に以下を重点的にチェック：
+   - 箇条書きの最後の項目が下部の装飾と重なっていないか
+   - テキストがテキストボックスからはみ出していないか
+   - 背景や装飾要素とテキストが重なっていないか
+   
+   ```bash
+   # 必ず実行
+   libreoffice --headless --convert-to pdf --outdir . working_presentation.pptx
+   pdftoppm working_presentation.pdf check -png -r 150
+   # 全スライドをviewツールで確認
+   ```
+
+3. **テンプレートの項目数を尊重** - 元のテンプレートスライドの項目数を確認し、それを大幅に超えないようにする。超える場合は項目を統合するか、複数スライドに分割
+
+4. **常にテンプレートをコピーして作業** - 元のテンプレートファイルは保持
+
+5. **段階的な作成とチェック** - 一度に全部作らず、2-3スライドごとに視覚的確認を実施
+
+6. **ユーザーフィードバックの早期収集** - レイアウト選択後、作成前に確認
+
+7. **調整の記録** - 行った変更を記録し、最後に報告
 
 ---
 
@@ -569,6 +757,4 @@ for shape in new_slide.shapes:
 ---
 
 ## 参考資料
-
 - Python-pptx documentation: https://python-pptx.readthedocs.io/
-- pptxスキル: `/mnt/skills/public/pptx/SKILL.md`
