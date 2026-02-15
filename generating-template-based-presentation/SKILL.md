@@ -77,27 +77,7 @@ for i, slide in enumerate(prs.slides):
 - 位置とサイズ（重なり回避のため）
 - プレースホルダー以外のシェイプ（装飾要素、ロゴなど）
 
-### 1b. 視覚分析（PDF化）
-
-テンプレートをPDFに変換し、各ページの見た目を視覚的に確認する:
-
-```bash
-# テンプレートをPDF化
-python /mnt/skills/public/pptx/scripts/office/soffice.py --headless --convert-to pdf template.pptx
-
-# 各ページを画像化
-pdftoppm -jpeg -r 150 template.pdf template-slide
-```
-
-生成された画像（`template-slide-01.jpg`, `template-slide-02.jpg`, ...）を確認し、各レイアウトの**視覚的な役割**を判断する:
-- タイトルスライド
-- セクション区切り
-- コンテンツスライド（テキスト中心）
-- 図表スライド
-- 画像配置スライド
-- まとめ/エンディング
-
-### 1c. 分析結果の整理
+### 1b. 分析結果の整理
 
 Phase 1の結果を以下の形式で整理する:
 
@@ -151,7 +131,57 @@ Slide 4: Layout 5 ("Blank") → カスタム図表
 
 ## Phase 4: スライド作成
 
-python-pptxを使ってスライドを作成する。**参考資料は `references/` ディレクトリにある。**
+python-pptxを使ってスライドを作成する。
+
+**🚨 テンプレート準拠の厳守事項（CRITICAL）:**
+
+1. **必ずテンプレートの規定レイアウトを使用すること**
+   - Phase 1で分析したレイアウトのみを使用する
+   - 自分で新しいレイアウトを作成しない
+   - Phase 3で割り当てたレイアウトインデックスを正確に使用する
+
+2. **プレースホルダーを必ず使用すること**
+   - テキスト・画像・テーブル・チャートは必ずプレースホルダーに配置する
+   - プレースホルダーの `idx` 値はPhase 1の分析結果に基づく
+   - プレースホルダーがない場合のみ、shapes.add_*() で要素を追加する
+
+3. **新規要素を追加しないこと**
+   - `slide.shapes.add_textbox()` は原則使用禁止
+   - `slide.shapes.add_shape()` は装飾目的では使用しない
+   - テンプレートの既存デザイン要素（ロゴ、装飾線など）を削除・変更しない
+   - レイアウトに存在しないプレースホルダーを作成しない
+
+4. **書式設定の最小化**
+   - プレースホルダーの書式（フォント、色、サイズ）は可能な限り継承する
+   - `font` 属性は必要最小限の設定に留める（None推奨）
+   - テンプレートのマスタースタイルを上書きしない
+
+**違反例（禁止）:**
+```python
+# ❌ プレースホルダーを使わずテキストボックスを追加
+txBox = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(5), Inches(1))
+
+# ❌ レイアウトにない新規シェイプを装飾目的で追加
+slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(10), Inches(1))
+
+# ❌ 全ての書式を明示的に設定（継承を切る）
+run.font.name = "Arial"
+run.font.size = Pt(14)
+run.font.color.rgb = RGBColor(0, 0, 0)
+```
+
+**正しい例（推奨）:**
+```python
+# ✅ Phase 1で確認したプレースホルダーを使用
+layout = prs.slide_layouts[1]  # Phase 3で決定したレイアウト
+slide = prs.slides.add_slide(layout)
+title_ph = slide.placeholders[0]  # Phase 1で確認したidx
+body_ph = slide.placeholders[1]
+
+# ✅ テンプレートの書式を継承（font属性を設定しない）
+title_ph.text = "スライドタイトル"
+body_ph.text = "本文テキスト"
+```
 
 ### 基本構造
 
@@ -215,6 +245,10 @@ p.level = 0  # インデントレベル（0=トップ, 1=サブ）
 
 ### 文字書式の設定
 
+プレースホルダーは文字数が多くなったら自動でフォントサイズの調整が行われるため，
+極力テンプレートの書式設定を継承し，font属性は'None'のままにしてください．
+どうしても書式の変更が必要な場合は下記を参照してください．
+
 ```python
 from pptx.util import Pt
 from pptx.dml.color import RGBColor
@@ -236,24 +270,59 @@ font.color.rgb = RGBColor(0x33, 0x33, 0x33)
 2. **最初の段落は `paragraphs[0]`**: clear後も1つ残る
 3. **追加は `add_paragraph()`**: 2番目以降の段落
 4. **書式はrunレベルで設定**: `p.text =` はショートカット。細かい書式が必要な場合は `run` を使う
-5. **テンプレートの書式を継承させたい場合**: font属性を `None` のままにする（明示的に設定すると継承が切れる）
+5. **テンプレートの書式を極力継承する**: font属性を `None` のままにする（明示的に設定すると継承が切れる）
 
 ### 画像の挿入
 
-```python
-# ピクチャープレースホルダーへの挿入
-pic_ph = slide.placeholders[PIC_IDX]  # Phase 1で確認したidx
-picture = pic_ph.insert_picture('image.png')
-# 注意: insert_picture後は元のpic_phは無効になる
+**🚨 重要: 必ずピクチャープレースホルダーを優先すること**
 
-# 任意位置への画像追加
+画像を挿入する際は、以下の優先順位に従う:
+
+**優先順位1: ピクチャープレースホルダーを使用（推奨）**
+
+```python
+# Phase 1でPICTURE型のプレースホルダーを確認する
+# 例: placeholders[10] が PICTURE 型だった場合
+
+pic_ph = slide.placeholders[10]  # Phase 1で確認したPICTURE型のidx
+picture = pic_ph.insert_picture('image.png')
+
+# 注意事項:
+# - insert_picture()は画像のアスペクト比を保ちながらプレースホルダーに収める
+# - insert_picture後は元のpic_phオブジェクトは無効になる（戻り値のpictureを使う）
+# - プレースホルダーの位置・サイズはテンプレートで定義されているため調整不要
+```
+
+**優先順位2: レイアウトにピクチャープレースホルダーがない場合のみ add_picture() を使用**
+
+```python
+# ⚠️ 以下は、レイアウトにPICTURE型プレースホルダーが存在しない場合のみ使用
 from pptx.util import Inches
+
 slide.shapes.add_picture(
     'image.png',
     left=Inches(1), top=Inches(2),
     width=Inches(4), height=Inches(3)
 )
+
+# 注意: この方法はテンプレートのデザインを無視するため、
+# どうしても必要な場合のみ使用し、Phase 5の視覚的検証で配置を確認すること
 ```
+
+**Phase 1でのピクチャープレースホルダー確認方法:**
+
+```python
+# レイアウト分析時に PICTURE 型を探す
+for ph in layout.placeholders:
+    phf = ph.placeholder_format
+    if phf.type == PP_PLACEHOLDER.PICTURE:  # または type == 18
+        print(f'  ✅ PICTURE placeholder found: idx={phf.idx}')
+```
+
+**ベストプラクティス:**
+- 画像が必要なスライドでは、Phase 3でピクチャープレースホルダーを持つレイアウトを選択する
+- 複数の画像が必要な場合は、"Two Content" や "Comparison" など複数プレースホルダーを持つレイアウトを使用する
+- `add_picture()` を使う前に、本当にピクチャープレースホルダーがないか再確認する
 
 ### テーブルの作成
 
@@ -340,7 +409,7 @@ notes_text_frame.text = "このスライドの説明メモ"
 | 問題 | 原因 | 対策 |
 |------|------|------|
 | プレースホルダーが見つからない | idx値の誤り | Phase 1の分析結果を再確認 |
-| テキストが溢れる | コンテンツが長すぎる | フォントサイズ縮小 or テキスト分割 |
+| テキストが溢れる | コンテンツが長すぎる | テキスト分割 |
 | 書式が崩れる | font属性の明示設定 | 継承させたい属性は設定しない（None） |
 | 画像挿入後にエラー | insert_picture後の参照無効化 | 戻り値を使う |
 | 日本語が文字化け | フォント未指定 | "メイリオ", "游ゴシック" 等を明示 |
@@ -373,11 +442,18 @@ python -m markitdown output.pptx
 python -m markitdown output.pptx | grep -iE "xxxx|lorem|ipsum|click.*(add|to)|placeholder|sample"
 ```
 
-### 5c. 視覚的検証
+### 5c. 視覚的検証（🚨 CRITICAL: 全スライド必須確認）
 
-生成された画像（`slide-01.jpg`, `slide-02.jpg`, ...）を1枚ずつ確認する。
+**重要:** 生成されたすべてのスライド画像（`slide-01.jpg`, `slide-02.jpg`, ...）を**必ず1枚ずつ順番に**確認すること。**検証のスキップや一部のみ確認は禁止。**
 
-**チェック項目:**
+**確認手順:**
+1. 生成されたスライド画像ファイルの総数を確認する
+2. `slide-01.jpg` から最後のスライドまで、**全てのスライドを順番に1枚ずつ読み込む**
+3. 各スライドについて以下のチェック項目を確認する
+4. 問題が見つかった場合はスライド番号と問題点を記録する
+5. **すべてのスライドの確認が完了するまで次のフェーズに進まない**
+
+**各スライドのチェック項目:**
 - [ ] テキストの重なり・はみ出しがない
 - [ ] フォントサイズが適切（小さすぎない）
 - [ ] テンプレートのデザイン要素（ロゴ、装飾）が維持されている
@@ -386,6 +462,9 @@ python -m markitdown output.pptx | grep -iE "xxxx|lorem|ipsum|click.*(add|to)|pl
 - [ ] 日本語テキストが正しく表示されている
 - [ ] チャート・テーブルが正しく描画されている
 - [ ] 画像が適切なサイズで配置されている
+
+**確認結果の報告:**
+検証後は「全X枚のスライドを確認しました」と明記し、問題があった場合は該当スライド番号と内容を報告すること。
 
 ### 5d. 修正ループ
 
@@ -419,9 +498,7 @@ pip install "markitdown[pptx]" --break-system-packages
 
 ## 参考資料
 
-詳細なAPIリファレンスは以下を参照:
+基本的な操作はこのSKILL.mdに記載されていますが、より高度な操作が必要な場合は以下の詳細リファレンスを参照してください：
 
-- `references/python-pptx-concepts.md` — Presentation, Slide, Layout, Placeholder, Shape, Text の操作方法
-- `references/python-pptx-charts-tables.md` — Chart, Table の作成・操作方法
-
-**必ず作成開始前に参考資料を読むこと。** 特にプレースホルダーのidxアクセス、insert後の参照無効化、テキスト階層（TextFrame → Paragraph → Run）は重要。
+- `references/python-pptx-concepts.md` — Presentation, Slide, Layout, Placeholder, Shape, Text の詳細操作
+- `references/python-pptx-charts-tables.md` — Chart, Table の高度なカスタマイズ方法
